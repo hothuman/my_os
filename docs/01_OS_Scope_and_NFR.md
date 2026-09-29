@@ -330,3 +330,6 @@ git remote add origin <URL_РЕПОЗИТОРИЯ>
 git branch -M main
 git push -u origin main
 ```
+---
+
+Документация проекта StudentOS подготовлена по результатам практического занятия 1.
