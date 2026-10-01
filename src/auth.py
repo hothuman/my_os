@@ -36,3 +36,49 @@ def authenticate(login: str, password: str):
         }
     finally:
         connection.close()
+        
+def check_permission(current_user: str, action: str, target_owner=None) -> bool:
+    """
+    Проверяет права пользователя на действие.
+
+    Правила:
+    - admin имеет полный доступ;
+    - обычный пользователь может удалить только свой файл;
+    - guest не может удалять файлы;
+    - завершать процессы может только admin;
+    - неизвестные действия запрещены.
+    """
+    connection = get_connection()
+
+    try:
+        row = connection.execute(
+            """
+            SELECT role
+            FROM users
+            WHERE username = ?
+            """,
+            (current_user,),
+        ).fetchone()
+    finally:
+        connection.close()
+
+    role = row["role"] if row is not None else "guest"
+
+    # Администратору разрешены все действия.
+    if role == "admin":
+        return True
+
+    # Обычный пользователь может удалить только собственный файл.
+    if action == "delete_file":
+        return (
+            role == "user"
+            and target_owner is not None
+            and target_owner == current_user
+        )
+
+    # Завершать процессы может только администратор.
+    if action == "kill_process":
+        return False
+
+    # Неизвестное действие запрещаем.
+    return False       

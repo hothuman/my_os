@@ -2,8 +2,9 @@ from datetime import datetime
 
 from src.db import get_connection
 from src.db import init_db
-from src.auth import authenticate
-from src.fs import create_file, list_files
+from src.auth import authenticate, check_permission
+from src.fs import create_file, delete_file, list_files
+from src.scheduler import kill_process
 
 
 def log_syscall(name, args="", user="system", status="OK"):
@@ -86,9 +87,47 @@ def sys_read_file(path: str, current_user="guest") -> str:
 
 
 def sys_delete_file(path: str, current_user="guest") -> bool:
-    """Учебная заглушка удаления файла."""
-    log_syscall("sys_delete_file", path, current_user)
-    return True
+    """Удаляет файл с проверкой прав доступа."""
+    connection = get_connection()
+
+    try:
+        row = connection.execute(
+            """
+            SELECT owner
+            FROM files
+            WHERE path = ?
+            """,
+            (path,),
+        ).fetchone()
+    finally:
+        connection.close()
+
+    log_syscall("sys_delete_file", path, current_user, "check")
+
+    if row is None:
+        log_syscall("sys_delete_file", path, current_user, "NOT_FOUND")
+        return False
+
+    owner = row["owner"]
+
+    if not check_permission(
+        current_user,
+        "delete_file",
+        target_owner=owner,
+    ):
+        log_syscall("sys_delete_file", path, current_user, "DENIED")
+        return False
+
+    result = delete_file(path)
+
+    log_syscall(
+        "sys_delete_file",
+        path,
+        current_user,
+        "OK" if result else "NOT_FOUND",
+    )
+
+    return result
 
 
 def sys_list_files(path="/", current_user="guest") -> list:
@@ -119,9 +158,23 @@ def sys_ps(current_user="guest") -> list:
 
 
 def sys_kill(pid: int, current_user="guest") -> bool:
-    """Учебная заглушка завершения процесса."""
-    log_syscall("sys_kill", pid, current_user)
-    return True
+    """Завершает процесс с проверкой прав доступа."""
+    log_syscall("sys_kill", pid, current_user, "check")
+
+    if not check_permission(current_user, "kill_process"):
+        log_syscall("sys_kill", pid, current_user, "DENIED")
+        return False
+
+    result = kill_process(int(pid))
+
+    log_syscall(
+        "sys_kill",
+        pid,
+        current_user,
+        "OK" if result else "NOT_FOUND",
+    )
+
+    return result
 
 
 def sys_mem_alloc(size: int, current_user="guest") -> int:

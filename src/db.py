@@ -21,6 +21,24 @@ def get_connection():
     connection.row_factory = sqlite3.Row
     return connection
 
+def execute_query(sql: str, params: tuple = ()):
+    """Выполняет SQL-запрос и возвращает результат."""
+    try:
+        with get_connection() as connection:
+            cursor = connection.execute(sql, params)
+
+            if sql.lstrip().upper().startswith("SELECT"):
+                return [dict(row) for row in cursor.fetchall()]
+
+            connection.commit()
+            return cursor.lastrowid
+
+    except sqlite3.IntegrityError:
+        return None
+
+    except sqlite3.OperationalError as error:
+        print(f"Ошибка SQLite: {error}")
+        return None
 
 def _sha256(text):
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
