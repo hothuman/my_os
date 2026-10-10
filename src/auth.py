@@ -1,84 +1,61 @@
+"""Authentication and authorization helpers for StudentOS."""
+from __future__ import annotations
+
 import hashlib
 
-from src.db import get_connection
+from .db import execute_insert, execute_select, now
 
 
 def hash_password(password: str) -> str:
-    """Возвращает SHA-256 хэш пароля."""
+    """Return SHA-256 hash of a password."""
     return hashlib.sha256(password.encode("utf-8")).hexdigest()
 
 
-def authenticate(login: str, password: str):
-    """Проверяет логин и пароль пользователя."""
-    password_hash = hash_password(password)
+def register_user(login: str, password: str, role: str = "user") -> int | None:
+    """Register a user and return its id, or None when login is taken."""
+    if role not in {"admin", "user", "guest"}:
+        role = "user"
+    return execute_insert(
+        "users",
+        {
+            "username": login,
+            "password_hash": hash_password(password),
+            "role": role,
+            "created_at": now(),
+        },
+    )
 
-    connection = get_connection()
-    try:
-        user = connection.execute(
-            """
-            SELECT id, username, role, password_hash
-            FROM users
-            WHERE username = ?
-            """,
-            (login,),
-        ).fetchone()
 
-        if user is None:
-            return None
+def authenticate(login: str, password: str) -> dict | None:
+    """Return user dict if credentials are correct, otherwise None."""
+    rows = execute_select("users", {"username": login})
+    if not rows:
+        return None
+    user = rows[0]
+    if user["password_hash"] != hash_password(password):
+        return None
+    return {"id": user["id"], "username": user["username"], "role": user["role"]}
 
-        if user["password_hash"] != password_hash:
-            return None
 
-        return {
-            "id": user["id"],
-            "username": user["username"],
-            "role": user["role"],
-        }
-    finally:
-        connection.close()
-        
-def check_permission(current_user: str, action: str, target_owner=None) -> bool:
-    """
-    Проверяет права пользователя на действие.
+def get_role(username: str) -> str:
+    """Return role for a username or guest for unknown users."""
+    rows = execute_select("users", {"username": username}, columns=["role"])
+    return rows[0]["role"] if rows else "guest"
 
-    Правила:
-    - admin имеет полный доступ;
-    - обычный пользователь может удалить только свой файл;
-    - guest не может удалять файлы;
-    - завершать процессы может только admin;
-    - неизвестные действия запрещены.
-    """
-    connection = get_connection()
 
-    try:
-        row = connection.execute(
-            """
-            SELECT role
-            FROM users
-            WHERE username = ?
-            """,
-            (current_user,),
-        ).fetchone()
-    finally:
-        connection.close()
-
-    role = row["role"] if row is not None else "guest"
-
-    # Администратору разрешены все действия.
+def check_permission(current_user: str, action: str, target_owner: str | None = None) -> bool:
+    """Check access rights for a protected action."""
+    role = get_role(current_user)
     if role == "admin":
         return True
-
-    # Обычный пользователь может удалить только собственный файл.
-    if action == "delete_file":
-        return (
-            role == "user"
-            and target_owner is not None
-            and target_owner == current_user
-        )
-
-    # Завершать процессы может только администратор.
+    if role == "guest":
+        return action in {"echo", "whoami"}
+    if action in {"create_file", "read_file", "write_file", "delete_file", "mkdir", "rmdir", "copy", "move", "rename"}:
+        return target_owner in {None, current_user}
+    if action == "run_process":
+        return True
     if action == "kill_process":
+        return target_owner == current_user
+    if action == "view_logs":
         return False
-
-    # Неизвестное действие запрещаем.
-    return False       
+    return False

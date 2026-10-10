@@ -3,7 +3,7 @@ __pycache__/
 *.sqlite
 .venv/
 .vscode/
-*.log
 .pytest_cache/
+*.log
 .DS_Store
 Thumbs.db

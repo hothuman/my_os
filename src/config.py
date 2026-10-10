@@ -1,3 +1,4 @@
+"""Project configuration for StudentOS."""
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -6,9 +7,10 @@ LOG_DIR = PROJECT_ROOT / "logs"
 DB_PATH = DB_DIR / "os.sqlite"
 
 OS_NAME = "StudentOS"
-OS_VERSION = "1.0"
+OS_VERSION = "10.0"
 MAX_PROCESSES = 10
-MAX_MEMORY_MB = 256
+MAX_MEMORY_MB = 1024
+DEFAULT_PROCESS_MEMORY = 10
 
 DEFAULT_ADMIN_USERNAME = "admin"
 DEFAULT_ADMIN_PASSWORD = "admin123"

@@ -1,0 +1,129 @@
+
+=== tests.test_db ===
+[PASS] db CRUD
+[PASS] db select all and duplicate
+
+=== tests.test_kernel ===
+[PASS] kernel current user
+[PASS] kernel memory allocate/free
+[PASS] kernel memory limit
+[PASS] kernel pid/reset
+
+=== tests.test_auth ===
+[PASS] duplicate and hash storage
+[PASS] hash_password
+[PASS] check_permission
+[PASS] register/authenticate
+
+=== tests.test_permissions ===
+[PASS] admin может удалить файл user
+[PASS] admin может убить процесс
+[PASS] TC-02: guest не может удалить файл admin
+[PASS] guest не может убить процесс
+
+=== tests.test_fs ===
+[PASS] fs create/read/write/delete
+[PASS] fs directories/copy/move/tree
+[PASS] fs duplicate/list/owner/info
+
+=== tests.test_scheduler ===
+[PASS] scheduler create/list/get
+[PASS] scheduler limit/round_robin
+[PASS] scheduler terminate/memory
+
+=== tests.test_integration ===
+[PASS] integration directories
+[PASS] integration error handling
+[PASS] integration file flow
+[PASS] integration logs/auth
+[PASS] integration permission delete
+[PASS] integration process flow
+[PASS] integration register/login
+
+=== tests.test_kernel_unit ===
+[PASS] kernel current user
+[PASS] kernel memory allocate/free
+[PASS] kernel memory limit
+[PASS] kernel pid/reset
+
+=== tests.test_auth_unit ===
+[PASS] duplicate and hash storage
+[PASS] hash_password
+[PASS] check_permission
+[PASS] register/authenticate
+
+=== tests.test_fs_functional ===
+[PASS] fs functional create
+[PASS] fs functional read
+[PASS] fs functional write
+[PASS] fs functional duplicate
+[PASS] fs functional owner
+[PASS] fs functional info
+[PASS] fs functional mkdir
+[PASS] fs functional copy
+[PASS] fs functional move
+[PASS] fs functional delete
+Все функциональные тесты fs пройдены: 10
+
+=== tests.test_scheduler_functional ===
+[PASS] scheduler create
+[PASS] scheduler second create
+[PASS] scheduler list
+[PASS] scheduler get
+[PASS] scheduler count
+[PASS] scheduler round robin
+[PASS] scheduler terminate
+[PASS] scheduler terminated hidden
+[PASS] scheduler memory limit
+Все функциональные тесты scheduler пройдены: 9
+
+=== tests.test_syscalls_functional ===
+[PASS] syscall login
+[PASS] syscall whoami
+[PASS] syscall create
+[PASS] syscall read
+[PASS] syscall write
+[PASS] syscall list
+[PASS] syscall exec
+[PASS] syscall ps
+[PASS] syscall kill
+[PASS] syscall delete
+[PASS] syscall logs
+Все функциональные тесты syscalls пройдены: 11
+
+=== tests.test_integration_full ===
+[PASS] full admin login
+[PASS] full mkdir
+[PASS] full create
+[PASS] full read
+[PASS] full copy
+[PASS] full move
+[PASS] full run
+[PASS] full mem
+[PASS] full kill
+[PASS] full denied
+Все интеграционные full тесты пройдены: 10
+
+=== tests.test_stress ===
+[PASS] stress 50 files
+[PASS] stress 10 processes
+[PASS] stress 100 syscalls
+[PASS] stress memory limit
+
+=== tests.test_extra ===
+[PASS] extra count files
+[PASS] extra echo syscall
+[PASS] extra logs denied
+[PASS] extra memory info shape
+[PASS] extra mkdir syscall
+[PASS] extra normalize path
+[PASS] extra process count
+[PASS] extra process count after kill
+[PASS] extra pwd syscall
+[PASS] extra register syscall
+[PASS] extra tree root
+[PASS] extra tree syscall
+
+ИТОГОВАЯ СВОДКА
+Пройдено: 55
+Провалено: 0

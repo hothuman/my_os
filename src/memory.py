@@ -1,65 +1,27 @@
-from src.config import MAX_MEMORY_MB
-from src.db import get_connection
+"""Memory helpers for StudentOS."""
+from __future__ import annotations
+
+from .kernel import kernel_instance
 
 
 def get_used_memory() -> int:
-    """Возвращает объём памяти работающих процессов."""
-    connection = get_connection()
-
-    try:
-        row = connection.execute(
-            """
-            SELECT COALESCE(SUM(memory), 0) AS total
-            FROM processes
-            WHERE state = 'running'
-            """
-        ).fetchone()
-
-        return row["total"]
-    finally:
-        connection.close()
+    """Return used memory."""
+    return kernel_instance.memory_info()["used"]
 
 
 def get_free_memory() -> int:
-    """Возвращает свободный объём условной памяти."""
-    return MAX_MEMORY_MB - get_used_memory()
+    """Return free memory."""
+    return kernel_instance.memory_info()["free"]
 
 
-def allocate_memory(pid: int, size: int) -> int:
-    """Выделяет дополнительную память процессу."""
-    if size <= 0:
-        raise ValueError("Размер памяти должен быть больше нуля")
+def allocate_memory(size: int) -> int:
+    """Allocate memory and return used amount, or -1 on failure."""
+    if kernel_instance.allocate_memory(int(size)):
+        return kernel_instance.memory_info()["used"]
+    return -1
 
-    if get_used_memory() + size > MAX_MEMORY_MB:
-        raise MemoryError("Недостаточно памяти")
 
-    connection = get_connection()
-
-    try:
-        process = connection.execute(
-            """
-            SELECT memory
-            FROM processes
-            WHERE id = ? AND state = 'running'
-            """,
-            (pid,),
-        ).fetchone()
-
-        if process is None:
-            raise ProcessLookupError("Процесс не найден")
-
-        new_size = process["memory"] + size
-
-        connection.execute(
-            """
-            UPDATE processes
-            SET memory = ?
-            WHERE id = ?
-            """,
-            (new_size, pid),
-        )
-
-        connection.commit()
-        return new_size
-    finally:
-        connection.close()
+def free_memory(size: int) -> int:
+    """Free memory and return used amount."""
+    kernel_instance.free_memory(int(size))
+    return kernel_instance.memory_info()["used"]
